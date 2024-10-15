@@ -1,0 +1,194 @@
+# prompt: WRITE A CODE TO IMPORT A DATAFRAME USING SPARK
+
+!pip install pyspark
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col # Import col function
+from pyspark.sql.functions import when # Import when function
+
+# Create a SparkSession
+spark = SparkSession.builder.appName("DataFrameImport").getOrCreate()
+
+# Replace 'your_data.csv' with the actual path to your CSV file
+df = spark.read.csv("/content/sample_data/california_housing_test.csv", header=True, inferSchema=True)
+
+
+# Show the DataFrame
+df.show()
+
+# show only selected columns
+print("Printing selected columns")
+new_df = df.select('longitude','total_rooms')  
+new_df.show()
+
+# Shows the count of records of the df
+print("Printing count")
+count = df.count()
+print("Number of rows:", count)
+
+# Prints teh schema Structure 
+print("Printing Schema")
+df.printSchema()
+
+# Select few rows from the rows of the dataframe
+print("Printing few rows")
+first_five_rows = df.take(10)
+for row in first_five_rows:
+    print(row)  
+
+
+# Select First Row
+print("Printing First row")
+First_row = df.first()
+print(First_row) 
+
+# Print First row as Dictionary 
+print("Printing First row as Dictionary")
+First_row_dict = First_row.asDict()
+print(First_row_dict) 
+
+# Using with Column to add a column based on a criteria
+print("Using with Column to add a column based on a criteria")
+
+df.withColumn("Age_group",when(df["housing_median_age"]<20,"Teen").otherwise("Adult")).show()
+
+# How to rename a column
+print("How to rename a column")
+df.withColumnRenamed("housing_median_age","Median_Age").show()
+
+# How to drop a column 
+print("How to drop a column")
+
+df.drop("housing_median_age").show()
+
+# How to distinct
+print(" Printing after removing Duplicates")
+df.distinct().show()
+
+# Creating a dataset 
+#data to define data
+
+data = [("bhim",61,"Retired"),
+("Arun",57,"NotRetired"),
+("Govind",56,"NotRetired"),
+("Seshu",62,"Retired")]
+
+# colums is to define the column names 
+
+colums = ["Name","Age","status"]
+
+#Creating a dataframe using data ann colums
+
+df = spark.createDataFrame(data,colums)
+df.show()
+
+# Creating a view to help query the data frame
+
+df.createOrReplaceTempView("df") # This line registers the DataFrame 'df' as a temporary view named 'df'
+
+# Selecting data from the DataFrame view 
+
+result = spark.sql("SELECT * FROM df WHERE status = 'Retired'")
+result.show()
+
+df = spark.read.csv("/content/sample_data/california_housing_test.csv", header=True, inferSchema=True)
+
+# This describe the data in terms of count , mean , stddev 
+
+print("This describe the data in terms of count , mean , stddev")
+df.describe().show()
+ 
+# Printing datatypes of the data frame you can also use printschema
+print("Printing Datatypes of the column in the dataframe") 
+print(df.dtypes)
+
+# Filtering on a column value from the dataframe
+print("Filtering based on column value ")
+Filtered_df = df.filter((col("housing_median_age")>20) & (col("total_rooms")>3000))
+Filtered_df.show()
+
+print("This Session for Advanced DataFrame operations: Joins, Grouping, Sorting (hands-on)")
+print("____________________________________________________________________________________")
+
+# Exmaple on how to use Join
+print("Example on how to use Join")
+
+data1 = [("bhim",61,"Retired"),
+("Arun",57,"NotRetired"),
+("Govind",56,"NotRetired"),
+("Seshu",62,"Retired")]
+
+columns = ["Name","Age","status"]
+
+#Creating a dataframe using data ann colums
+
+df1 = spark.createDataFrame(data1,columns)
+
+df1.show()
+
+data2 = [("bhim","Alwal"),
+("Arun","Sainagar"),
+("Govind","Marredpally"),
+("Seshu","Gachibowli")]
+
+colums1 = ["Name","PlaceOfStay"]
+
+#Creating a dataframe using data ann colums
+
+df2 = spark.createDataFrame(data2,colums1)
+
+df2.show()
+
+print("Inner Join between df1 and df2 dataframe")
+
+Joined_df = df1.join(df2,on="Name",how="inner")
+Joined_df.show()
+
+print("Left Join between df1 and df2 dataframe")
+
+Joined_df = df1.join(df2,on="Name",how="left")
+Joined_df.show()
+
+print("Right Join between df1 and df2 dataframe")
+
+Joined_df = df1.join(df2,on="Name",how="right")
+Joined_df.show()
+
+print("Full Join between df1 and df2 dataframe")
+
+Joined_df = df1.join(df2,on="Name",how="full")
+Joined_df.show()
+
+
+# This is exmaple for a cross join 
+data1 = [("bhim",61,"Retired"),
+("Arun",57,"NotRetired"),
+("Govind",56,"NotRetired"),
+("Seshu",62,"Retired")]
+
+columns1 = ["Name","Age","status"]
+
+#Creating a dataframe using data and colums
+
+df1 = spark.createDataFrame(data1,columns1)
+
+data2= [("Hyderabad",),
+        ("Mumbai",),
+        ("Nepal",)]
+
+columns2 = ["Location"]
+
+#Creating a crossjoined dataframe using data and colums
+print("This example is to learn cross join")
+df2 = spark.createDataFrame(data2,columns2)       
+
+CrossJoined_df = df1.crossJoin(df2.select("*"))  
+
+CrossJoined_df.show()
+
+
+
+
+
+# Stop the SparkSession when you're done
+spark.stop()
